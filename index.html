@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PROTO.DEV | Asistente de Precálculo · UMG</title>
+  <meta name="description" content="PROTO.DEV: asistente de precálculo de la Universidad Mariano Gálvez de Guatemala, sección B.">
+  <link rel="icon" href="logo_umg.webp" type="image/webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="proto-style.css">
+  <!-- Librerías de matemáticas (necesitan Internet) -->
+  <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.13/all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjs@13.2.0/lib/browser/math.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<div class="page">
+
+  <!-- ===== ENCABEZADO ===== -->
+  <header class="hero">
+    <h1 class="wordmark" aria-label="PROTO punto DEV">proto<span class="dot">.</span>dev<span class="cursor" aria-hidden="true">_</span></h1>
+    <p class="tagline">Escribe un ejercicio de precálculo. PROTO.DEV lo resuelve, lo grafica y te explica el procedimiento.</p>
+  </header>
+
+  <!-- ===== FICHA DEL EQUIPO ===== -->
+  <section class="ficha" aria-label="Datos académicos">
+    <img class="escudo" src="logo_umg.webp" alt="Escudo de la Universidad Mariano Gálvez de Guatemala" width="132" height="132">
+    <div class="ficha-datos">
+      <p class="uni">Universidad Mariano Gálvez de Guatemala</p>
+      <dl>
+        <div><dt>Curso</dt><dd>Precálculo</dd></div>
+        <div><dt>Sección</dt><dd>B</dd></div>
+        <div class="ancho"><dt>Catedrático</dt><dd>Ing. Reyes Baltazar Maza Guerra</dd></div>
+        <div class="ancho"><dt>Integrantes</dt>
+          <dd>Jhónatan Emanuel Cúnay Quiñonez<br>Christian José Daniel Santos Cua</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ===== VENTANA PRINCIPAL ===== -->
+  <main class="ventana">
+    <div class="barra" role="tablist" aria-label="Secciones">
+      <button class="tab activa" role="tab" data-tab="asistente" aria-selected="true">Asistente IA</button>
+      <button class="tab" role="tab" data-tab="resolver" aria-selected="false">Resolver</button>
+      <button class="tab" role="tab" data-tab="trigo" aria-selected="false">Trigonometría</button>
+      <button class="tab" role="tab" data-tab="ejemplos" aria-selected="false">Ejemplos y práctica</button>
+    </div>
+
+    <!-- Asistente IA (chat) -->
+    <section class="panel" id="tab-asistente" role="tabpanel">
+      <div class="chat" id="chat" aria-live="polite"></div>
+      <div class="presets" id="chat-sugeridas"></div>
+      <div class="entrada" style="margin-top:14px">
+        <span class="prompt" aria-hidden="true">?</span>
+        <input id="chat-in" placeholder="Escribe tu ejercicio o pregunta..." autocomplete="off" spellcheck="false">
+        <button id="chat-send" class="primario">Enviar</button>
+      </div>
+    </section>
+
+    <!-- Pestaña: resolver -->
+    <section class="panel" id="tab-resolver" role="tabpanel" hidden>
+      <label for="pregunta">Pregunta al asistente</label>
+      <div class="entrada">
+        <span class="prompt" aria-hidden="true">?</span>
+        <input id="pregunta" placeholder="Analiza f(x) = x^3 - 6x^2 + 9x + 1; determina sus puntos críticos y clasifica sus extremos relativos." autocomplete="off" spellcheck="false">
+        <button id="ask" class="primario">Preguntar</button>
+      </div>
+      <p class="ayuda">Escribe el enunciado como en tu hoja (en español). El asistente detecta qué te piden, resuelve y muestra fórmulas, sustitución y respuesta.</p>
+      <label for="expr">O escribe solo la función o ecuación</label>
+      <div class="entrada">
+        <span class="prompt" aria-hidden="true">f(x) &gt;</span>
+        <input id="expr" placeholder="2*x + 5 = 17" autocomplete="off" spellcheck="false">
+        <button id="solve" class="primario">Resolver</button>
+      </div>
+      <p class="ayuda">Usa <code>x</code> como variable. Potencias con <code>^</code> (x^2); también entiendo 2x y x². Funciones: sin(x) o sen(x), cos(x), tan(x), sqrt(x), log(x), exp(x). Para la hoja de trigonometría usa la pestaña Trigonometría.</p>
+
+      <div class="entrada">
+        <span class="prompt" aria-hidden="true">a, b</span>
+        <input id="pa" placeholder="a (límite o inicio)" autocomplete="off" style="max-width:190px">
+        <input id="pb" placeholder="b (fin de la integral)" autocomplete="off" style="max-width:190px">
+      </div>
+      <p class="ayuda">Opcional: <b>a</b> es el valor al que tiende x en un límite (por defecto 0). <b>a</b> y <b>b</b> son los extremos de una integral definida.</p>
+      <div class="acciones" id="acciones"></div>
+
+      <h2>Procedimiento y respuesta</h2>
+      <pre id="result" role="status" aria-live="polite">Hola, soy PROTO.DEV.
+Escribe un ejercicio arriba o abre la pestaña Ejemplos y práctica.</pre>
+      <div id="plot"></div>
+
+      <section class="practica" id="practice" hidden>
+        <h2>Práctica rápida</h2>
+        <p id="question"></p>
+        <div class="entrada">
+          <span class="prompt" aria-hidden="true">resp &gt;</span>
+          <input id="answer" placeholder="Escribe tu respuesta" autocomplete="off" spellcheck="false">
+          <button id="check" class="primario">Comprobar</button>
+        </div>
+        <p id="feedback" role="status"></p>
+      </section>
+    </section>
+
+    <!-- Pestaña 2: trigonometría (hoja de trabajo, Temas 5 y 6) -->
+    <section class="panel" id="tab-trigo" role="tabpanel" hidden>
+      <label for="trig-tool">Herramienta</label>
+      <select id="trig-tool"></select>
+      <p class="ayuda" id="trig-ayuda"></p>
+      <div class="campos" id="trig-campos"></div>
+      <div class="entrada"><button id="trig-run" class="primario">Calcular</button></div>
+      <h2>Procedimiento y respuesta</h2>
+      <pre id="trig-out" role="status" aria-live="polite">Elige una herramienta, completa los datos y pulsa Calcular. También puedes cargar un ejercicio desde Ejemplos y práctica.</pre>
+      <div id="plot-trig"></div>
+    </section>
+
+    <!-- Pestaña 3: ejemplos -->
+    <section class="panel" id="tab-ejemplos" role="tabpanel" hidden>
+      <p class="ayuda">Diez ejercicios listos. Al elegir uno, se carga en el solucionador y se resuelve solo.</p>
+      <div class="ejemplos" id="ejemplos"></div>
+      <h2>Hoja de trabajo: Temas 5 y 6 (trigonometría)</h2>
+      <p class="ayuda">Los ejercicios marcados como plantilla tienen datos de ejemplo: cámbialos por los de tu hoja en la pestaña Trigonometría.</p>
+      <div class="ejemplos" id="ejemplos-hoja"></div>
+    </section>
+  </main>
+
+  <footer>
+    PROTO.DEV · Precálculo, sección B · Universidad Mariano Gálvez de Guatemala<br>
+    Versión 5 · Los resultados son una guía de estudio: verifica siempre sustituyendo en el ejercicio original.
+  </footer>
+</div>
+
+<script src="proto-app.js"></script>
+<script src="proto-trig.js"></script>
+</body>
+</html>
